@@ -20,6 +20,9 @@ services:
       - mailhog
     env_file:
       - .env.example
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     networks:
       - dat250-net
     volumes:

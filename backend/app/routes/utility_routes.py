@@ -81,6 +81,9 @@ def import_resource_get(request: Request, url: str = ""):
     if url:
         try:
             r = safe_fetch(url)
+            ctype = r.headers.get("Content-Type", "")
+            if not ctype.startswith(("text/", "application/json")):
+                raise ValueError("Unsupported content type")
             body = r.text[:2000]
         except ValueError:
             error = "This URL is not allowed. Only public http/https addresses can be imported."
