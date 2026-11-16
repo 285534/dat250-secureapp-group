@@ -1,6 +1,4 @@
-
-import time
-
+import secrets
 from fastapi import APIRouter, Request, Form
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -49,13 +47,7 @@ def login(
         fetchone=True,
     )
 
-    if not user:
-        return templates.TemplateResponse(
-            "login.html",
-            {"request": request, "error": "Invalid email or password."},
-        )
-
-    if not verify_password(password, user["password_hash"]):
+    if not user or not verify_password(password, user["password_hash"]):
         return templates.TemplateResponse(
             "login.html",
             {"request": request, "error": "Invalid email or password."},
@@ -152,35 +144,24 @@ def reset_password_request(
         fetchone=True,
     )
 
-    if not user:
-        return templates.TemplateResponse(
-            "reset_password.html",
-            {
-                "request": request,
-                "mode": "request",
-                "message": "No user found with that email.",
-            },
+    if user:
+        token = secrets.token_urlsafe(32)
+        run_query(
+            """
+            INSERT INTO password_reset_tokens (user_id, token)
+            VALUES (%s, %s)
+            """,
+            (user["id"], token),
+            commit=True,
         )
-
-    token = str(int(time.time()))[-6:]
-
-    run_query(
-        """
-        INSERT INTO password_reset_tokens (user_id, token)
-        VALUES (%s, %s)
-        """,
-        (user["id"], token),
-        commit=True,
-    )
-
-    send_reset_email(email, token)
+        send_reset_email(email, token)
 
     return templates.TemplateResponse(
         "reset_password.html",
         {
             "request": request,
             "mode": "request",
-            "message": f"Reset email sent to {email}.",
+            "message": f"Reset email sent to {email} if it exists.",
         },
     )
 
