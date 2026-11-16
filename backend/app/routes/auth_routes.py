@@ -63,10 +63,11 @@ def login(
 
     token = create_session(user["id"])
 
-    response = RedirectResponse("/dashboard", status_code=302)
-    response.set_cookie("session_token", token)
+    resp = RedirectResponse("/dashboard", status_code=302)
+    resp.set_cookie("session_token", token, httponly=True, samesite="lax")
+    return resp
 
-    return response
+
 
 
 @router.get("/register", response_class=HTMLResponse)
